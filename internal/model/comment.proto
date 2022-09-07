@@ -1,0 +1,21 @@
+syntax = "proto3";
+package model;
+
+message CommentCountData {
+  int32 like = 1;
+  int32 hate = 2;
+  int32 count = 3;
+}
+
+message CommentMetaData {
+  int64 obj_id = 1;
+  int32 obj_type = 2;
+  int64 uid = 3;
+  int64 comment_id = 4;
+  int64 root = 5;
+  int64 parent = 6;
+  int32 floor = 7;
+  int32 ip = 8;
+  int64 create_time = 9;
+  string message = 10;
+}

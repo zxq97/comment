@@ -1,0 +1,75 @@
+syntax = "proto3";
+package commentsvc;
+import "internal/model/comment.proto";
+
+message EmptyResponse {
+}
+
+message PublishRequest {
+  int64 obj_id = 1;
+  int32 obj_type = 2;
+  int64 comment_id = 3;
+  int64 author_uid = 4;
+  int64 uid = 5;
+  int64 root = 6;
+  int64 parent = 7;
+  int32 ip = 8;
+  int64 create_time = 9;
+  string message = 10;
+}
+
+message ListRequest {
+  int64 obj_id = 1;
+  int32 obj_type = 2;
+  int64 root = 3;
+  int32 floor = 4;
+  int32 offset = 5;
+}
+
+message AttrRequest {
+  int64 obj_id = 1;
+  int32 obj_type = 2;
+  int64 comment_id = 3;
+  int64 uid = 4;
+}
+
+message CommentItem {
+  model.CommentMetaData meta_data = 1;
+  model.CommentCountData cnt_data = 2;
+}
+
+message ItemList {
+  repeated CommentItem item_list = 1;
+}
+
+message CreateRequest {
+  PublishRequest create = 1;
+}
+
+message ReplyRequest {
+  PublishRequest reply = 1;
+}
+
+message CommentListRequest {
+  ListRequest list = 1;
+  int32 list_type = 2;
+}
+
+message CommentListResponse {
+  ItemList item_list = 1;
+  map<int64, ItemList> item_map = 2;
+}
+
+message CommentSubListResponse {
+  CommentItem item = 1;
+  ItemList item_list = 2;
+}
+
+service CommentSvc {
+  rpc CreateComment (CreateRequest) returns (EmptyResponse) {}
+  rpc ReplyComment (ReplyRequest) returns (EmptyResponse) {}
+  rpc LikeComment (AttrRequest) returns (EmptyResponse) {}
+  rpc HateComment (AttrRequest) returns (EmptyResponse) {}
+  rpc GetCommentList (CommentListRequest) returns (CommentListResponse) {}
+  rpc GetCommentSubList (CommentListRequest) returns (CommentSubListResponse) {}
+}
