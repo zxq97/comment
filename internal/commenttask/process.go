@@ -58,6 +58,10 @@ func rebuild(ctx context.Context, kfkmsg *kafka.KafkaMessage) {
 		env.ExcLogger.Printf("ctx %v publish Unmarshal kfkmsg %#v err %v", ctx, kfkmsg, err)
 		return
 	}
+	ok := cache.CheckTimeIndexExist(ctx, list.ObjId, list.Root, kfkmsg.EventType, list.Floor, int8(list.ObjType))
+	if ok {
+		return
+	}
 	switch kfkmsg.EventType {
 	case constant.EventTypeListMissed:
 		floor, subMap, err = store.GetCommentListByTime(ctx, list.ObjId, constant.DefaultListMissOffset, list.Floor, int8(list.ObjType))

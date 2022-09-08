@@ -81,6 +81,25 @@ func GetCommentsFirstSubListByTime(ctx context.Context, ids []int64, objid int64
 	return subMap, nil
 }
 
+func CheckTimeIndexExist(ctx context.Context, objid, commentid int64, eventtype, floor int32, objtype int8) bool {
+	var key string
+	if eventtype == constant.EventTypeListMissed {
+		key = fmt.Sprintf(redisKeyZCommentTimeList, objid, objtype)
+	} else if eventtype == constant.EventTypeSubListMissed {
+		key = fmt.Sprintf(redisKeyZCommentTimeSubList, objid, objtype, commentid)
+	} else {
+		return false
+	}
+	err := rdx.ZScore(ctx, key, cast.Itoa(int(floor))).Err()
+	if err != nil {
+		if err != redis.Nil {
+			env.ExcLogger.Printf("ctx %v CheckTimeIndexExist objid %v objtype %v commentid %v eventtype %v floor %v err %v", ctx, objid, objtype, commentid, eventtype, floor, err)
+		}
+		return false
+	}
+	return true
+}
+
 func SetCommentTimeIndex(ctx context.Context, objid int64, objtype int8, floors []*model.CommentFloor, subMap map[int64][]*model.CommentFloor) error {
 	wg := concurrent.NewWaitGroup()
 	wg.Go(func() {
