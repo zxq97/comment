@@ -24,6 +24,11 @@ var (
 	sfg      singleflight.Group
 )
 
+type ListResult struct {
+	Roots  []int64
+	SubMap map[int64][]int64
+}
+
 type CommentSvc struct {
 }
 
@@ -79,14 +84,17 @@ func (CommentSvc) HateComment(ctx context.Context, req *AttrRequest) (*EmptyResp
 
 func (CommentSvc) GetCommentList(ctx context.Context, req *CommentListRequest) (*CommentListResponse, error) {
 	var (
-		roots    []int64
-		subMap   map[int64][]int64
 		floor    []*model.CommentFloor
 		floorMap map[int64][]*model.CommentFloor
+		val      interface{}
 		err      error
 	)
 	sfk := fmt.Sprintf(sfKeyGetTimeList, req.List.ObjId, req.List.ObjType, req.List.Floor)
-	_, err, _ = sfg.Do(sfk, func() (interface{}, error) {
+	val, err, _ = sfg.Do(sfk, func() (interface{}, error) {
+		var (
+			roots  []int64
+			subMap map[int64][]int64
+		)
 		roots, err = cache.GetCommentListByTime(ctx, req.List.ObjId, req.List.Offset, req.List.Floor, int8(req.List.ObjType))
 		if err != nil {
 			env.ExcLogger.Printf("ctx %v GetCommentListByTime objid %v objtype %v floor %v err %v", req.List.ObjId, req.List.ObjType, req.List.Floor, err)
@@ -113,11 +121,17 @@ func (CommentSvc) GetCommentList(ctx context.Context, req *CommentListRequest) (
 				subMap = floorMap2arr(floorMap)
 			}
 		}
-		return nil, nil
+		return &ListResult{
+			Roots:  roots,
+			SubMap: subMap,
+		}, nil
 	})
-	if err != nil {
+	res, ok := val.(*ListResult)
+	if err != nil || !ok {
 		return &CommentListResponse{}, err
 	}
+	roots := res.Roots
+	subMap := res.SubMap
 	ids := make([]int64, 0, len(roots)<<2)
 	for k, v := range subMap {
 		ids = append(ids, k)
@@ -146,12 +160,13 @@ func (CommentSvc) GetCommentList(ctx context.Context, req *CommentListRequest) (
 
 func (CommentSvc) GetCommentSubList(ctx context.Context, req *CommentListRequest) (*CommentSubListResponse, error) {
 	var (
-		ids   []int64
 		floor []*model.CommentFloor
+		val   interface{}
 		err   error
 	)
 	sfk := fmt.Sprintf(sfKeyGetTimeSubList, req.List.ObjId, req.List.ObjType, req.List.Root, req.List.Floor)
-	_, err, _ = sfg.Do(sfk, func() (interface{}, error) {
+	val, err, _ = sfg.Do(sfk, func() (interface{}, error) {
+		var ids []int64
 		ids, err = cache.GetCommentSubListByTime(ctx, req.List.ObjId, req.List.Root, req.List.Offset, req.List.Floor, int8(req.List.ObjType))
 		if err != nil {
 			env.ExcLogger.Printf("ctx %v GetCommentSubListByTime objid %v objtype %v commentid %v floor %v err %v", ctx, req.List.ObjId, req.List.ObjType, req.List.Root, req.List.Floor, err)
@@ -164,11 +179,15 @@ func (CommentSvc) GetCommentSubList(ctx context.Context, req *CommentListRequest
 			}
 			ids = floor2arr(floor...)
 		}
-		return nil, nil
+		return &ListResult{
+			Roots: ids,
+		}, nil
 	})
-	if err != nil {
+	res, ok := val.(*ListResult)
+	if err != nil || !ok {
 		return &CommentSubListResponse{}, nil
 	}
+	ids := res.Roots
 	if req.List.Floor == 0 {
 		ids = append(ids, req.List.Root)
 	}
