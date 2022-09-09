@@ -12,6 +12,7 @@ import (
 	"github.com/zxq97/comment/internal/model"
 	"github.com/zxq97/gotool/cast"
 	"github.com/zxq97/gotool/concurrent"
+	"github.com/zxq97/gotool/kafka"
 )
 
 const (
@@ -83,9 +84,9 @@ func GetCommentsFirstSubListByTime(ctx context.Context, ids []int64, objid int64
 
 func CheckTimeIndexExist(ctx context.Context, objid, commentid int64, eventtype, floor int32, objtype int8) bool {
 	var key string
-	if eventtype == constant.EventTypeListMissed {
+	if eventtype == kafka.EventTypeListMissed {
 		key = fmt.Sprintf(redisKeyZCommentTimeList, objid, objtype)
-	} else if eventtype == constant.EventTypeSubListMissed {
+	} else if eventtype == kafka.EventTypeSubListMissed {
 		key = fmt.Sprintf(redisKeyZCommentTimeSubList, objid, objtype, commentid)
 	} else {
 		return false
@@ -230,4 +231,31 @@ func SetCommentsCountData(ctx context.Context, objid int64, objtype int8, cntMap
 			env.ExcLogger.Println("ctx %v SetCommentsCountData objid %v objtype %v id %v err %v", ctx, objid, objtype, k, err)
 		}
 	}
+}
+
+func deleteCommentTimeIndex(ctx context.Context, objid, root int64, objtype int8, ids []int64) {
+	key := fmt.Sprintf(redisKeyZCommentTimeList, objid, objtype)
+	skey := fmt.Sprintf(redisKeyZCommentTimeSubList, objid, objtype, root)
+	pipe := rdx.Pipeline()
+	if len(ids) != 0 {
+		pipe.ZRem(ctx, skey, ids)
+	} else {
+		pipe.Del(ctx, skey)
+		pipe.ZRem(ctx, key, root)
+	}
+	_, err := pipe.Exec(ctx)
+	if err != nil {
+		env.ExcLogger.Printf("ctx %v deleteCommentTimeIndex objid %v root %v objtype %v ids %v err %v", ctx, objid, root, objtype, ids, err)
+	}
+}
+
+func DeleteComment(ctx context.Context, objid, root int64, objtype int8, ids []int64) {
+	wg := concurrent.NewWaitGroup()
+	wg.Go(func() {
+		deleteCommentMetaData(ctx, objid, objtype, append(ids, root))
+	})
+	wg.Go(func() {
+		deleteCommentTimeIndex(ctx, objid, root, objtype, ids)
+	})
+	wg.Wait()
 }

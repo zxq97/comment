@@ -22,7 +22,7 @@ func publish(ctx context.Context, kfkmsg *kafka.KafkaMessage) {
 		return
 	}
 	switch kfkmsg.EventType {
-	case constant.EventTypeCreate:
+	case kafka.EventTypeCreate:
 		floor, err = store.CommentCreate(ctx, comment.CommentId, comment.ObjId, comment.AuthorUid, comment.Uid, comment.Ip, int8(comment.ObjType), comment.Message)
 		if err != nil {
 			env.ExcLogger.Printf("ctx %v publish CommentCreate comment %#v err %v", ctx, comment, err)
@@ -33,7 +33,7 @@ func publish(ctx context.Context, kfkmsg *kafka.KafkaMessage) {
 			env.ExcLogger.Printf("ctx %v publish AddCommentTimeIndex comment %#v floor %#v err %v", ctx, comment, floor, err)
 			return
 		}
-	case constant.EventTypeReply:
+	case kafka.EventTypeReply:
 		floor, err = store.CommentReply(ctx, comment.CommentId, comment.ObjId, comment.Uid, comment.Root, comment.Parent, comment.Ip, int8(comment.ObjType), comment.Message)
 		if err != nil {
 			env.ExcLogger.Printf("ctx %v publish CommentReply comment %#v err %v", ctx, comment, err)
@@ -63,7 +63,7 @@ func rebuild(ctx context.Context, kfkmsg *kafka.KafkaMessage) {
 		return
 	}
 	switch kfkmsg.EventType {
-	case constant.EventTypeListMissed:
+	case kafka.EventTypeListMissed:
 		floor, subMap, err = store.GetCommentListByTime(ctx, list.ObjId, constant.DefaultListMissOffset, list.Floor, int8(list.ObjType))
 		if err != nil {
 			env.ExcLogger.Printf("ctx %v get list objid %v objtype %v floor %v err %v", ctx, list.ObjId, list.ObjType, list.Floor, err)
@@ -74,7 +74,7 @@ func rebuild(ctx context.Context, kfkmsg *kafka.KafkaMessage) {
 			env.ExcLogger.Printf("ctx %v set index list objid %v objtype %v floor %v err %v", ctx, list.ObjId, list.ObjType, floor)
 			return
 		}
-	case constant.EventTypeSubListMissed:
+	case kafka.EventTypeSubListMissed:
 		floor, err = store.GetCommentSubListByTime(ctx, list.ObjId, list.Root, list.Offset, list.Floor, int8(list.ObjType))
 		if err != nil {
 			env.ExcLogger.Printf("ctx %v get sub list objid %v objtype %v root %v floor %v err %v", list.ObjId, list.ObjType, list.Root, list.Floor, err)
@@ -88,6 +88,26 @@ func rebuild(ctx context.Context, kfkmsg *kafka.KafkaMessage) {
 	}
 }
 
-func attr(ctx context.Context, kfkmsg *kafka.KafkaMessage) {
-
+func operator(ctx context.Context, kfkmsg *kafka.KafkaMessage) {
+	var ope *commentsvc.OperatorRequest
+	err := proto.Unmarshal(kfkmsg.Message, ope)
+	if err != nil {
+		env.ExcLogger.Printf("ctx %v operator Unmarshal kfkmsg %#v err %v", ctx, kfkmsg, err)
+		return
+	}
+	switch kfkmsg.EventType {
+	case kafka.EventTypeLike:
+	case kafka.EventTypeHate:
+	case kafka.EventTypeDelete:
+		var (
+			root int64
+			ids  []int64
+		)
+		root, ids, err = store.DeleteComment(ctx, ope.ObjId, ope.CommentId, ope.Uid, int8(ope.ObjType))
+		if err != nil {
+			env.ExcLogger.Printf("ctx %v store DeleteComment ojbid %v objtype %v uid %v commentid %v err %v", ctx, ope.ObjId, ope.ObjType, ope.Uid, ope.CommentId)
+			return
+		}
+		cache.DeleteComment(ctx, ope.ObjId, root, int8(ope.ObjType), ids)
+	}
 }

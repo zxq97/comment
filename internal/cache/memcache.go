@@ -56,3 +56,13 @@ func SetCommentsMetaData(ctx context.Context, objid int64, objtype int8, metaMap
 		}
 	}
 }
+
+func deleteCommentMetaData(ctx context.Context, objid int64, objtype int8, ids []int64) {
+	for _, v := range ids {
+		key := fmt.Sprintf(mcKeyCommentMetadata, objid, objtype, v)
+		err := mcx.Delete(key)
+		if err != nil {
+			env.ExcLogger.Println("mcx del err", key, err)
+		}
+	}
+}

@@ -175,3 +175,36 @@ func GetCommentItem(ctx context.Context, objid int64, objtype int8, ids []int64)
 	metaMap, cntMap := packComment(m, idxMap)
 	return metaMap, cntMap, nil
 }
+
+func DeleteComment(ctx context.Context, objid, commentid, uid int64, objtype int8) (int64, []int64, error) {
+	ids := make([]int64, 0, 10)
+	var root int64
+	err := dbCli.Tx(ctx, func(sess sqlbuilder.Tx) error {
+		filter := db.Cond{"obj_id": objid, "obj_type": objtype, "uid": uid, "id": commentid}
+		floor := &model.CommentFloor{}
+		floors := []*model.CommentFloor{}
+		err := sess.Select("root").From(tableCommentIndex).Where(filter).One(floor)
+		if err != nil {
+			return err
+		}
+		root = floor.Root
+		if root == 0 {
+			filter = db.Cond{"obj_id": objid, "obj_type": objtype, "root": commentid}
+			_, err = sess.Update(tableCommentIndex).Set("state = 1").Where(filter).Exec()
+			root = commentid
+		} else {
+			filter = db.Cond{"obj_id": objid, "obj_type": objtype, "root": root, "parent": commentid}
+			err = sess.Select("id").From(tableCommentIndex).Where(filter).All(&floors)
+			for _, v := range floors {
+				ids = append(ids, v.ID)
+			}
+		}
+		if err != nil {
+			return err
+		}
+		filter = db.Cond{"obj_id": objid, "obj_type": objtype, "id IN": append(ids, commentid)}
+		_, err = sess.Update(tableCommentIndex).Set("state = 1").Where(filter).Exec()
+		return err
+	})
+	return root, ids, err
+}

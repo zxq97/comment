@@ -26,7 +26,7 @@ message ListRequest {
   int32 offset = 5;
 }
 
-message AttrRequest {
+message OperatorRequest {
   int64 obj_id = 1;
   int32 obj_type = 2;
   int64 comment_id = 3;
@@ -68,8 +68,9 @@ message CommentSubListResponse {
 service CommentSvc {
   rpc CreateComment (CreateRequest) returns (EmptyResponse) {}
   rpc ReplyComment (ReplyRequest) returns (EmptyResponse) {}
-  rpc LikeComment (AttrRequest) returns (EmptyResponse) {}
-  rpc HateComment (AttrRequest) returns (EmptyResponse) {}
+  rpc LikeComment (OperatorRequest) returns (EmptyResponse) {}
+  rpc HateComment (OperatorRequest) returns (EmptyResponse) {}
+  rpc DeleteComment (OperatorRequest) returns (EmptyResponse) {}
   rpc GetCommentList (CommentListRequest) returns (CommentListResponse) {}
   rpc GetCommentSubList (CommentListRequest) returns (CommentSubListResponse) {}
 }

@@ -34,6 +34,8 @@ CREATE TABLE comment_index
     KEY           idx_objid_objtype_floor (`obj_id`, `obj_type`, `floor`)
 )ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+ALTER TABLE comment_index ADD INDEX idx_objid_objtype_root_parent (`obj_id`, `obj_type`, `root`, `parent`);
+
 CREATE TABLE comment_content
 (
     `comment_id`  BIGINT        NOT NULL DEFAULT 0,

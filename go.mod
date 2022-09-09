@@ -6,7 +6,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/protobuf v1.5.2
 	github.com/prometheus/client_golang v1.13.0
-	github.com/zxq97/gotool v0.0.12
+	github.com/zxq97/gotool v0.0.13
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
 	google.golang.org/grpc v1.49.0
 	upper.io/db.v3 v3.8.0+incompatible

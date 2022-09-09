@@ -2,7 +2,6 @@ package commenttask
 
 import (
 	"github.com/zxq97/comment/internal/cache"
-	"github.com/zxq97/comment/internal/constant"
 	"github.com/zxq97/comment/internal/env"
 	"github.com/zxq97/comment/internal/store"
 	"github.com/zxq97/gotool/config"
@@ -24,23 +23,31 @@ func InitCommentTask(conf *CommentTaskConfig) error {
 }
 
 func InitConsumer(conf *config.KafkaConf) error {
-	publishConsumer, err := kafka.InitConsumer(conf.Addr, []string{constant.TopicCommentPublish}, "comment_task_publish", env.ApiLogger, env.ExcLogger)
+	publishConsumer, err := kafka.InitConsumer(conf.Addr, []string{kafka.TopicCommentPublish}, "comment_task_publish", publish, env.ApiLogger, env.ExcLogger)
 	if err != nil {
 		return err
 	}
-	publishConsumer.Start(publish)
-	rebuildConsumer, err := kafka.InitConsumer(conf.Addr, []string{constant.TopicCommentCacheRebuild}, "comment_task_rebuild", env.ApiLogger, env.ExcLogger)
+	rebuildConsumer, err := kafka.InitConsumer(conf.Addr, []string{kafka.TopicCommentCacheRebuild}, "comment_task_rebuild", rebuild, env.ApiLogger, env.ExcLogger)
 	if err != nil {
 		return err
 	}
-	rebuildConsumer.Start(rebuild)
-	attrConsumer, err := kafka.InitConsumer(conf.Addr, []string{constant.TopicCommentAttr}, "comment_task_attr", env.ApiLogger, env.ExcLogger)
+	operatorConsumer, err := kafka.InitConsumer(conf.Addr, []string{kafka.TopicCommentOperator}, "comment_task_operator", operator, env.ApiLogger, env.ExcLogger)
 	if err != nil {
 		return err
 	}
-	attrConsumer.Start(attr)
-	consumers = append(consumers, publishConsumer, rebuildConsumer, attrConsumer)
+	opusOpeConsumer, err := kafka.InitConsumer(conf.Addr, []string{kafka.TopicOpusOperator}, "comment_task_opus_ope", opusOpe, env.ApiLogger, env.ExcLogger)
+	if err != nil {
+		return err
+	}
+	consumers = append(consumers, publishConsumer, rebuildConsumer, operatorConsumer, opusOpeConsumer)
+	StartConsumer(consumers)
 	return nil
+}
+
+func StartConsumer(consumers []*kafka.Consumer) {
+	for _, v := range consumers {
+		v.Start()
+	}
 }
 
 func StopConsumer() {
