@@ -15,9 +15,9 @@ import (
 )
 
 func packKafkaMsg(ctx context.Context, req proto.Message, eventtype int32) ([]byte, error) {
-	traceid, ok := ctx.Value(constant.TraceIDKey).(string)
+	trace, ok := ctx.Value(constant.TraceIDKey).(string)
 	if !ok {
-		traceid = generate.UUIDStr()
+		trace = generate.UUIDStr()
 	}
 	bs, err := proto.Marshal(req)
 	if err != nil {
@@ -25,7 +25,7 @@ func packKafkaMsg(ctx context.Context, req proto.Message, eventtype int32) ([]by
 		return nil, err
 	}
 	kfkmsg := &kafka.KafkaMessage{
-		TraceId:   traceid,
+		TraceId:   trace,
 		EventType: eventtype,
 		Message:   bs,
 	}

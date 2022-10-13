@@ -89,7 +89,7 @@ func rebuild(ctx context.Context, kfkmsg *kafka.KafkaMessage) {
 }
 
 func operator(ctx context.Context, kfkmsg *kafka.KafkaMessage) {
-	var ope *commentsvc.OperatorRequest
+	var ope *commentsvc.DeleteRequest
 	err := proto.Unmarshal(kfkmsg.Message, ope)
 	if err != nil {
 		env.ExcLogger.Printf("ctx %v operator Unmarshal kfkmsg %#v err %v", ctx, kfkmsg, err)

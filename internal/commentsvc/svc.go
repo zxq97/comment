@@ -64,25 +64,7 @@ func (CommentSvc) ReplyComment(ctx context.Context, req *ReplyRequest) (*EmptyRe
 	return &EmptyResponse{}, producer.SendMessage(kafka.TopicCommentPublish, []byte(shardKey), bs)
 }
 
-func (CommentSvc) LikeComment(ctx context.Context, req *OperatorRequest) (*EmptyResponse, error) {
-	bs, err := packKafkaMsg(ctx, req, kafka.EventTypeLike)
-	if err != nil {
-		return &EmptyResponse{}, err
-	}
-	shardKey := cast.FormatInt(req.Uid)
-	return &EmptyResponse{}, producer.SendMessage(kafka.TopicCommentOperator, []byte(shardKey), bs)
-}
-
-func (CommentSvc) HateComment(ctx context.Context, req *OperatorRequest) (*EmptyResponse, error) {
-	bs, err := packKafkaMsg(ctx, req, kafka.EventTypeHate)
-	if err != nil {
-		return &EmptyResponse{}, err
-	}
-	shardKey := cast.FormatInt(req.Uid)
-	return &EmptyResponse{}, producer.SendMessage(kafka.TopicCommentOperator, []byte(shardKey), bs)
-}
-
-func (CommentSvc) DeleteComment(ctx context.Context, req *OperatorRequest) (*EmptyResponse, error) {
+func (CommentSvc) DeleteComment(ctx context.Context, req *DeleteRequest) (*EmptyResponse, error) {
 	bs, err := packKafkaMsg(ctx, req, kafka.EventTypeDelete)
 	if err != nil {
 		return &EmptyResponse{}, err

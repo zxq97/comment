@@ -11,7 +11,7 @@ import (
 
 const (
 	commentCacheContentTTL = 24 * 3600
-	mcKeyCommentMetadata   = "comment_metadata_%d_%d_%d" // objid objtype commentid
+	mcKeyCommentMetadata   = "cmt_md_%d_%d_%d" // objid objtype commentid
 )
 
 func GetCommentsMetaData(ctx context.Context, objid int64, objtyoe int8, ids []int64) (map[int64]*model.CommentMetaData, []int64, error) {

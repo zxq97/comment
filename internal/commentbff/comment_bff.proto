@@ -1,6 +1,5 @@
 syntax = "proto3";
-package commentsvc;
-import "internal/model/comment.proto";
+package commentbff;
 
 message EmptyResponse {
 }
@@ -24,22 +23,27 @@ message ListRequest {
   int64 root = 3;
   int32 floor = 4;
   int32 offset = 5;
+  int32 list_type = 6;
 }
 
-message DeleteRequest {
+message CommentItem {
   int64 obj_id = 1;
   int32 obj_type = 2;
   int64 comment_id = 3;
   int64 uid = 4;
+  int64 root = 5;
+  int64 parent = 6;
+  int32 floor = 7;
+  int32 like = 8;
+  int32 hate = 9;
+  int32 count = 10;
+  int32 ip = 11;
+  int64 create_time = 12;
+  string message = 13;
 }
 
-message CommentItem {
-  model.CommentMetaData meta_data = 1;
-  model.CommentCountData cnt_data = 2;
-}
-
-message ItemList {
-  repeated CommentItem item_list = 1;
+message CommentList {
+  repeated CommentItem list = 1;
 }
 
 message CreateRequest {
@@ -50,25 +54,27 @@ message ReplyRequest {
   PublishRequest reply = 1;
 }
 
-message CommentListRequest {
-  ListRequest list = 1;
-  int32 list_type = 2;
+message DeleteRequest {
+  int64 obj_id = 1;
+  int32 obj_type = 2;
+  int64 comment_id = 3;
+  int64 uid = 4;
 }
 
-message CommentListResponse {
-  ItemList item_list = 1;
-  map<int64, ItemList> item_map = 2;
+message ListResponse {
+  CommentList list = 1;
+  map<int64, CommentList> sub_map = 2;
 }
 
-message CommentSubListResponse {
+message SubListResponse {
   CommentItem item = 1;
-  ItemList item_list = 2;
+  CommentList list = 2;
 }
 
-service CommentSvc {
+service Comment {
   rpc CreateComment (CreateRequest) returns (EmptyResponse) {}
   rpc ReplyComment (ReplyRequest) returns (EmptyResponse) {}
   rpc DeleteComment (DeleteRequest) returns (EmptyResponse) {}
-  rpc GetCommentList (CommentListRequest) returns (CommentListResponse) {}
-  rpc GetCommentSubList (CommentListRequest) returns (CommentSubListResponse) {}
+  rpc GetCommentList (ListRequest) returns (ListResponse) {}
+  rpc GetCommentSubList (ListRequest) returns (SubListResponse) {}
 }
