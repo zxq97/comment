@@ -29,7 +29,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	commentconn, err := rpc.NewGrpcConn(etcdCli, "commentsvc", conf.Hystrix["commentsvc"])
+	conn, err := rpc.NewGrpcConn(etcdCli, "commentsvc", conf.Hystrix["commentsvc"])
+	if err != nil {
+		panic(err)
+	}
+	relationConn, err := rpc.NewGrpcConn(etcdCli, "relationbff", conf.Hystrix["relationbff"])
 	if err != nil {
 		panic(err)
 	}
@@ -47,8 +51,8 @@ func main() {
 
 	select {
 	case err = <-errCh:
-		log.Println("commentsvc stop err", err)
+		log.Println("commentbff stop err", err)
 	case sig := <-sigCh:
-		log.Println("commenetsvc stop sign", sig)
+		log.Println("commenetbff stop sign", sig)
 	}
 }
