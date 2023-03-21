@@ -1,0 +1,93 @@
+syntax = "proto3";
+package comment.service.v1;
+option go_package = "api/service/v1;v1";
+import "google/protobuf/empty.proto";
+
+message CreateRequest {
+  int64 obj_id = 1;
+  int32 obj_type = 2;
+  int64 comment_id = 3;
+  int64 author_uid = 4;
+  int64 uid = 5;
+  int32 ip = 6;
+  string message = 7;
+}
+
+message ReplyRequest {
+  int64 obj_id = 1;
+  int32 obj_type = 2;
+  int64 comment_id = 3;
+  int64 author_uid = 4;
+  int64 uid = 5;
+  int32 ip = 6;
+  string message = 7;
+  int64 root = 8;
+  int64 parent = 9;
+}
+
+message DeleteRequest {
+  int64 obj_id = 1;
+  int32 obj_type = 2;
+  int64 comment_id = 3;
+  int64 uid = 4;
+}
+
+message ListRequest {
+  int64 obj_id = 1;
+  int32 obj_type = 2;
+  int32 floor = 3;
+  int32 limit = 4;
+}
+
+message SubListRequest {
+  int64 obj_id = 1;
+  int32 obj_type = 2;
+  int32 floor = 3;
+  int32 limit = 4;
+  int64 comment_id = 5;
+}
+
+message ListItem {
+  int64 comment_id = 1;
+  repeated int64 children_id = 2;
+}
+
+message ListResponse {
+  repeated ListItem list = 1;
+}
+
+message SubListResponse {
+  repeated int64 comment_id = 1;
+}
+
+message MultiGetRequest {
+  int64 obj_id = 1;
+  int32 obj_type = 2;
+  repeated int64 ids = 3;
+}
+
+message CommentInfo {
+  int64 obj_id = 1;
+  int32 obj_type = 2;
+  int64 comment_id = 3;
+  int64 uid = 4;
+  int32 floor = 5;
+  int64 root = 6;
+  int64 parent = 7;
+  int32 ip = 8;
+  string message = 9;
+  int64 ctime = 10;
+}
+
+message MultiGetResponse {
+  map<int64, CommentInfo> m = 1;
+}
+
+service CommentSvc {
+  rpc CreateComment (CreateRequest) returns (google.protobuf.Empty) {}
+  rpc ReplyComment (ReplyRequest) returns (google.protobuf.Empty) {}
+  rpc DeleteComment (DeleteRequest) returns (google.protobuf.Empty) {}
+  rpc GetCommentList (ListRequest) returns (ListResponse) {}
+  rpc GetCommentSubList (SubListRequest) returns (SubListResponse) {}
+  rpc MultiGetComment (MultiGetRequest) returns (MultiGetResponse) {}
+}
